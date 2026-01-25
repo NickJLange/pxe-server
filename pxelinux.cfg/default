@@ -1,0 +1,20 @@
+DEFAULT menu.c32
+PROMPT 0
+TIMEOUT 300
+MENU TITLE PXE Boot Menu
+
+LABEL linux
+    MENU LABEL ^Install Linux
+    KERNEL http://{{SERVER_IP}}:{{HTTP_PORT}}/casper/vmlinuz
+    INITRD http://{{SERVER_IP}}:{{HTTP_PORT}}/casper/initrd
+    APPEND root=/dev/ram0 ramdisk_size=1500000 ip=dhcp url=http://{{SERVER_IP}}:{{HTTP_PORT}}/ubuntu.iso boot=casper netboot=url
+
+LABEL live
+    MENU LABEL ^Live Session
+    KERNEL http://{{SERVER_IP}}:{{HTTP_PORT}}/casper/vmlinuz
+    INITRD http://{{SERVER_IP}}:{{HTTP_PORT}}/casper/initrd
+    APPEND root=/dev/ram0 ramdisk_size=1500000 ip=dhcp url=http://{{SERVER_IP}}:{{HTTP_PORT}}/ubuntu.iso boot=casper netboot=url quiet splash
+
+LABEL local
+    MENU LABEL Boot from ^Local Drive
+    LOCALBOOT 0

@@ -1,0 +1,41 @@
+# PXE Boot Server - dnsmasq configuration
+
+# Interface binding
+interface={{INTERFACE}}
+# Use bind-dynamic for rootless container support
+bind-dynamic
+
+# DHCP configuration
+dhcp-range={{DHCP_RANGE}}
+dhcp-option=option:router,{{SERVER_IP}}
+dhcp-option=option:dns-server,{{SERVER_IP}}
+
+# Use non-privileged port for DHCP
+#dhcp-alternate-port={{DHCP_PORT}},68
+
+# TFTP configuration
+enable-tftp
+tftp-root={{TFTP_ROOT}}
+tftp-no-blocksize
+#port={{TFTP_PORT}}
+
+# PXE boot configuration with architecture detection
+# Tag BIOS clients
+dhcp-match=set:bios,option:client-arch,0
+
+# Tag UEFI clients (x86-64)
+dhcp-match=set:efi-x86_64,option:client-arch,7
+dhcp-match=set:efi-x86_64,option:client-arch,9
+
+# Boot file for BIOS clients
+dhcp-boot=tag:bios,bios/pxelinux.0,{{SERVER_IP}}
+
+# Boot file for UEFI clients
+dhcp-boot=tag:efi-x86_64,grub/grubx64.efi,{{SERVER_IP}}
+
+# Logging
+log-dhcp
+
+# Don't forward queries without domain
+domain-needed
+bogus-priv

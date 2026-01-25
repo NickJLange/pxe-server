@@ -1,0 +1,42 @@
+#!/usr/sbin/nft -f
+
+# PXE port redirection: standard ports -> high ports for rootless container
+# Container maps: 2067->67, 2069->69, 2080->80 (external high -> internal standard)
+# NFT redirects: 67->2067, 69->2069, 80->2080 (so PXE clients using standard ports work)
+
+table inet pxe_redirect {
+    chain prerouting {
+        type nat hook prerouting priority dstnat; policy accept;
+        
+        # Debug: log all PXE-related traffic
+        udp dport 67 log prefix "PXE-DHCP-IN: " level debug
+        udp dport 69 log prefix "PXE-TFTP-IN: " level debug
+        tcp dport 80 log prefix "PXE-HTTP-IN: " level debug
+        udp dport 2067 log prefix "PXE-DHCP-HIGH: " level debug
+        udp dport 2069 log prefix "PXE-TFTP-HIGH: " level debug
+        tcp dport 2080 log prefix "PXE-HTTP-HIGH: " level debug
+        
+        # DHCP: 67/udp -> 2067/udp (standard -> high port for container)
+        udp dport 67 redirect to :2067
+        
+        # TFTP: 69/udp -> 2069/udp
+        udp dport 69 redirect to :2069
+        
+        # HTTP: 80/tcp -> 2080/tcp
+        tcp dport 80 redirect to :2080
+    }
+    
+    chain output {
+        type nat hook output priority -100; policy accept;
+        
+        # Debug: log local connections
+        udp dport 67 log prefix "PXE-DHCP-LOCAL: " level debug
+        udp dport 69 log prefix "PXE-TFTP-LOCAL: " level debug
+        tcp dport 80 log prefix "PXE-HTTP-LOCAL: " level debug
+        
+        # Handle local connections (for testing)
+        udp dport 67 redirect to :2067
+        udp dport 69 redirect to :2069
+        tcp dport 80 redirect to :2080
+    }
+}
