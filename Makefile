@@ -8,42 +8,43 @@ CONTAINER_NAME ?= pxe
 ENV_FILE ?= pxe.env
 BUILD_DIR ?= build
 
-# Extract ISO name for tag (e.g., ubuntu-25.10-desktop-amd64 from .iso filename)
-ISO_NAME ?= $(shell ls -1 *.iso 2>/dev/null | head -1 | sed 's/\.iso$$//')
-TAG ?= $(if $(ISO_NAME),$(ISO_NAME),latest)
+# Ubuntu version for netboot (default: 25.10)
+UBUNTU_VERSION ?= 25.10
+TAG ?= ubuntu-$(UBUNTU_VERSION)-netboot
 
-.PHONY: build push pull run stop clean login nft-setup nft-teardown logs env-file prepare-iso help
+.PHONY: build push pull run stop clean login nft-setup nft-teardown logs env-file prepare-netboot help
 
 help:
 	@echo "Targets:"
-	@echo "  build        Prepare ISO and build self-contained container image"
-	@echo "  push         Push to $(REGISTRY)"
-	@echo "  pull         Pull from $(REGISTRY)"
-	@echo "  run          Run container"
-	@echo "  stop         Stop and remove container"
-	@echo "  clean        Remove container, build dir, and local image"
-	@echo "  login        Login to ghcr.io (requires GITHUB_TOKEN)"
-	@echo "  nft-setup    Setup nftables port redirects (requires sudo)"
-	@echo "  nft-teardown Remove nftables port redirects (requires sudo)"
-	@echo "  logs         Follow container logs"
-	@echo "  env-file     Create pxe.env from example"
+	@echo "  prepare-netboot  Fetch Ubuntu netboot files from mirror"
+	@echo "  build            Build container image"
+	@echo "  push             Push to $(REGISTRY)"
+	@echo "  pull             Pull from $(REGISTRY)"
+	@echo "  run              Run container"
+	@echo "  stop             Stop and remove container"
+	@echo "  clean            Remove container, build dir, and local image"
+	@echo "  login            Login to ghcr.io (requires GITHUB_TOKEN)"
+	@echo "  nft-setup        Setup nftables port redirects (requires sudo)"
+	@echo "  nft-teardown     Remove nftables port redirects (requires sudo)"
+	@echo "  logs             Follow container logs"
+	@echo "  env-file         Create pxe.env from example"
 	@echo ""
 	@echo "Workflow:"
 	@echo "  1. make env-file && edit pxe.env"
-	@echo "  2. Place ISO in current directory or set ISO_URL"
+	@echo "  2. make prepare-netboot"
 	@echo "  3. make build run"
 	@echo ""
 	@echo "Variables:"
 	@echo "  IMAGE=$(IMAGE)"
 	@echo "  TAG=$(TAG)"
+	@echo "  UBUNTU_VERSION=$(UBUNTU_VERSION)"
 	@echo "  BUILD_DIR=$(BUILD_DIR)"
 	@echo "  ENV_FILE=$(ENV_FILE)"
 
-prepare-iso: $(ENV_FILE)
-	@if [ ! -f $(ENV_FILE) ]; then echo "Run: make env-file"; exit 1; fi
-	BUILD_DIR=$(BUILD_DIR) bash -c 'source $(ENV_FILE) && ./prepare-iso.sh'
+prepare-netboot:
+	UBUNTU_VERSION=$(UBUNTU_VERSION) BUILD_DIR=$(BUILD_DIR) ./prepare-netboot.sh
 
-build: prepare-iso
+build:
 	podman build -t $(IMAGE):$(TAG) .
 
 push: build

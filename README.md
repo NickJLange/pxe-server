@@ -1,6 +1,6 @@
 # mkz1 - Minimal PXE Boot Container
 
-A Podman container that serves DHCP, TFTP, and HTTP for PXE booting Linux ISOs.
+A Podman container that serves DHCP, TFTP, and HTTP for PXE booting Ubuntu via netboot.
 
 > **Note**: Requires `NET_ADMIN` and `NET_RAW` capabilities for DHCP functionality.
 
@@ -9,11 +9,10 @@ A Podman container that serves DHCP, TFTP, and HTTP for PXE booting Linux ISOs.
 ```bash
 # 1. Configure environment
 make env-file
-# Edit pxe.env with your ISO_URL and SERVER_IP
+# Edit pxe.env with your SERVER_IP and network settings
 
-# 2. Download ISO and extract boot files (on host)
-ln -s ubuntu-25.10-desktop-amd64.iso build/iso/boot.iso
-make prepare-iso
+# 2. Fetch Ubuntu netboot files
+make prepare-netboot
 
 # 3. Build and run container
 make build
@@ -31,7 +30,7 @@ The `build/` directory can be rsynced to a destination server:
 
 ```bash
 # On build machine
-make prepare-iso
+make prepare-netboot
 
 # Deploy to remote server
 rsync -av build/ remote:/pxe/
@@ -49,13 +48,13 @@ podman run -d --name pxe \
 
 | Environment Variable | Default | Description |
 |---------------------|---------|-------------|
-| `ISO_URL` | (required) | URL to download Linux ISO or path to an existing local ISO (used by `make prepare-iso`) |
+| `UBUNTU_VERSION` | `25.10` | Ubuntu version for netboot files |
 | `SERVER_IP` | `192.168.100.1` | IP address of the PXE server |
 | `DHCP_RANGE` | `192.168.100.50,192.168.100.100,12h` | DHCP range and lease time |
 | `INTERFACE` | `eth0` | Network interface to bind |
-| `DHCP_PORT` | `2067` | DHCP server port (unprivileged) |
-| `TFTP_PORT` | `2069` | TFTP server port (unprivileged) |
-| `HTTP_PORT` | `2080` | HTTP server port (unprivileged) |
+| `DHCP_PORT` | `67` | DHCP server port |
+| `TFTP_PORT` | `69` | TFTP server port |
+| `HTTP_PORT` | `80` | HTTP server port |
 
 ## Architecture
 
@@ -67,19 +66,20 @@ podman run -d --name pxe \
 │  ┌───────────────────────────────────────────────────┐ │
 │  │ Container (with NET_ADMIN, NET_RAW caps)          │ │
 │  │                                                   │ │
-│  │  dnsmasq (:2067 DHCP, :2069 TFTP)                │ │
-│  │  python3 http.server (:2080)                     │ │
+│  │  dnsmasq (:67 DHCP, :69 TFTP)                    │ │
+│  │  python3 http.server (:80)                       │ │
 │  │                                                   │ │
 │  │  /tftp/bios/     - BIOS boot files (pxelinux)   │ │
 │  │  /tftp/grub/     - UEFI boot files (grub)       │ │
-│  │  /var/www/html/  - ISO contents                  │ │
+│  │  /tftp/ubuntu/   - Ubuntu kernel + initrd       │ │
+│  │  /var/www/html/  - HTTP files                    │ │
 │  └───────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ## Port Mapping
 
-The container runs on high ports (2000+). Use nftables on the host to redirect standard PXE ports:
+The container uses standard ports internally. Use nftables on the host to redirect from high ports:
 
 | Standard Port | Container Port | Service |
 |--------------|----------------|---------|
@@ -106,16 +106,12 @@ RUN_INTEGRATION=1 ./test/run_all_tests.sh
 
 The server auto-detects client architecture via DHCP option 93 (client-arch).
 
-## Supported Image Formats
+## Netboot Source
 
-The container can extract boot files from:
-- ISO 9660 images (`.iso`)
-- tar archives (`.tar`)
-- gzipped tar archives (`.tar.gz`)
+Files are fetched from Ubuntu's official archive mirror:
+- `http://archive.ubuntu.com/ubuntu/dists/${UBUNTU_VERSION}/main/installer-amd64/current/legacy-images/netboot/`
 
-## Tested ISOs
+## Tested Versions
 
-- Ubuntu 24.04 Desktop
-- Ubuntu 22.04 Desktop/Server
-
-Other ISOs with `casper/` or `isolinux/` layouts should work.
+- Ubuntu 25.10 (Questing Quokka)
+- Ubuntu 24.04 LTS (Noble Numbat)

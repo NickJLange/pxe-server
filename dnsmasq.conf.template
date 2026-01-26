@@ -16,7 +16,7 @@ dhcp-option=option:dns-server,{{SERVER_IP}}
 # TFTP configuration
 enable-tftp
 tftp-root={{TFTP_ROOT}}
-tftp-no-blocksize
+tftp-mtu=1500
 #port={{TFTP_PORT}}
 
 # PXE boot configuration with architecture detection

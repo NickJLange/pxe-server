@@ -20,15 +20,14 @@ log() {
 
 copy_files() {
     log "Copying boot files to runtime directories..."
-    cp -a "$BUILD_TFTP" "$TFTP_ROOT"
-    cp -a "$BUILD_HTTP" "$HTTP_ROOT"
+    ln -s "$BUILD_TFTP" "$TFTP_ROOT"
+    ln -s "$BUILD_HTTP" "$HTTP_ROOT"
     log "Boot files copied to $TFTP_ROOT and $HTTP_ROOT"
 }
 
-generate_configs() {
-    log "Generating configuration files..."
-    
-    # Generate dnsmasq.conf
+generate_dnsmasq_config() {
+    log "Generating dnsmasq configuration..."
+
     sed -e "s|{{SERVER_IP}}|$SERVER_IP|g" \
         -e "s|{{DHCP_RANGE}}|$DHCP_RANGE|g" \
         -e "s|{{DHCP_PORT}}|$DHCP_PORT|g" \
@@ -36,18 +35,8 @@ generate_configs() {
         -e "s|{{INTERFACE}}|$INTERFACE|g" \
         -e "s|{{TFTP_ROOT}}|$TFTP_ROOT|g" \
         /etc/dnsmasq.conf.template > /etc/dnsmasq.conf
-    
-    # Generate pxelinux config
-    sed -e "s|{{SERVER_IP}}|$SERVER_IP|g" \
-        -e "s|{{HTTP_PORT}}|$HTTP_PORT|g" \
-        "$TFTP_ROOT/bios/pxelinux.cfg/default.template" > "$TFTP_ROOT/bios/pxelinux.cfg/default"
-    
-    # Generate grub.cfg
-    sed -e "s|{{SERVER_IP}}|$SERVER_IP|g" \
-        -e "s|{{HTTP_PORT}}|$HTTP_PORT|g" \
-        "$TFTP_ROOT/grub/grub.cfg.template" > "$TFTP_ROOT/grub/grub.cfg"
-    
-    log "Configuration generated"
+
+    log "dnsmasq configuration generated"
 }
 
 start_http_server() {
@@ -68,9 +57,9 @@ main() {
     log "Server IP: $SERVER_IP"
     log "DHCP Range: $DHCP_RANGE"
     log "Ports - DHCP: $DHCP_PORT, TFTP: $TFTP_PORT, HTTP: $HTTP_PORT"
-    
+
     copy_files
-    generate_configs
+    generate_dnsmasq_config
     start_http_server
     start_dnsmasq
 }
