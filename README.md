@@ -71,7 +71,8 @@ podman run -d --name pxe \
 │  │                                                   │ │
 │  │  /tftp/bios/     - BIOS boot files (pxelinux)   │ │
 │  │  /tftp/grub/     - UEFI boot files (grub)       │ │
-│  │  /tftp/ubuntu/   - Ubuntu kernel + initrd       │ │
+│  │  /tftp/linux     - Ubuntu kernel                │ │
+│  │  /tftp/initrd    - Ubuntu initrd                │ │
 │  │  /var/www/html/  - HTTP files                    │ │
 │  └───────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
