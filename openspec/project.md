@@ -1,7 +1,7 @@
 # Project Context
 
 ## Purpose
-mkz1 is a minimal PXE boot container that serves DHCP, TFTP, and HTTP for network booting Linux ISOs. It runs as a Podman container with unprivileged ports (2067, 2069, 2080) and uses host nftables to redirect standard PXE ports (67, 69, 80).
+mkz1 is a minimal PXE boot container that serves DHCP, TFTP, and HTTP for network booting Ubuntu via netboot files. It runs as a Podman container with unprivileged ports (2067, 2069, 2080) and uses host nftables to redirect standard PXE ports (67, 69, 80).
 
 ## Tech Stack
 - **Container**: Alpine Linux 3.20, Podman/OCI
