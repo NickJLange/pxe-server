@@ -11,13 +11,13 @@ dhcp-option=option:router,{{SERVER_IP}}
 dhcp-option=option:dns-server,{{SERVER_IP}}
 
 # Use non-privileged port for DHCP
-#dhcp-alternate-port={{DHCP_PORT}},68
+dhcp-alternate-port={{DHCP_PORT}},68
 
 # TFTP configuration
 enable-tftp
 tftp-root={{TFTP_ROOT}}
-tftp-no-blocksize
-#port={{TFTP_PORT}}
+tftp-mtu=1500
+port={{TFTP_PORT}}
 
 # PXE boot configuration with architecture detection
 # Tag BIOS clients
